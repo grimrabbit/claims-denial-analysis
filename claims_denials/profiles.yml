@@ -1,0 +1,9 @@
+   claims_denials:
+     target: dev
+     outputs:
+       dev:
+         type: duckdb
+         path: ../data/claims_denials.duckdb
+         extensions:
+           - excel
+         threads: 1
