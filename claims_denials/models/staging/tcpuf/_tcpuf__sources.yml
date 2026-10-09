@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: tcpuf
+    description: >
+      CMS Transparency in Coverage public use file, PY2026 release
+      (claims data from plan year 2024). Stored unchanged in data/raw/.
+    tables:
+      - name: ind_qhp
+        description: >
+          Individual Marketplace medical QHP tab. One row per plan.
+          Issuer-level columns repeat on every plan row for that issuer and state.
+          Every column is read as text so legend codes (**, N/A) survive the load.
+        config:
+          external_location: >-
+            read_xlsx('../data/raw/tcpuf_py2026.xlsx',
+              sheet = 'Transparency 2026 - Ind QHP',
+              range = 'A3:AR',
+              header = true,
+              all_varchar = true,
+              stop_at_empty = true)

@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: stg_tcpuf__plan_denials
+    description: >
+      One row per Individual Marketplace medical plan, with plan-level claim
+      counts and denial reasons typed as integers. Suppressed (**) and
+      new-plan (N/A) cells are null; denial_total_status records which.
+    columns:
+      - name: plan_id
+        description: 14-character CMS plan ID.
+        data_tests:
+          - unique
+          - not_null
+      - name: denial_total_status
+        description: Whether the in-network denial total was reported, suppressed (1-10), or missing because the plan is new.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['reported', 'suppressed', 'new_plan']
