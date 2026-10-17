@@ -19,6 +19,23 @@ models:
               arguments:
                 to: ref('stg_tcpuf__issuer_claims')
                 field: issuer_id
+      - name: claims_denied_in_network
+        description: Denied in-network claims (final adjudication). Null when suppressed or new.
+        data_tests:
+          - not_greater_than:
+              arguments:
+                compare_to: claims_received_in_network
+      - name: claims_denied_out_of_network
+        description: >
+          Out-of-network denials. Known issue: 30 plans across 6 issuers report
+          more denials than claims received. Out-of-network counts are outside
+          the v1 analysis, so this test warns instead of failing.
+        data_tests:
+          - not_greater_than:
+              arguments:
+                compare_to: claims_received_out_of_network
+              config:
+                severity: warn
       - name: denial_total_status
         description: Whether the in-network denial total was reported, suppressed (1-10), or missing because the plan is new.
         data_tests:
@@ -38,6 +55,28 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: claims_denied_in_network
+        description: Denied in-network claims (final adjudication). Null when suppressed or new.
+        data_tests:
+          - not_greater_than:
+              arguments:
+                compare_to: claims_received_in_network
+      - name: claims_denied_out_of_network
+        description: >
+          Out-of-network denials. Known issue: 2 issuers (73836 AK, 37160 ND) report
+          more denials than claims received. Out-of-network counts are outside
+          the v1 analysis, so this test warns instead of failing.
+        data_tests:
+          - not_greater_than:
+              arguments:
+                compare_to: claims_received_out_of_network
+              config:
+                severity: warn
+      - name: internal_appeals_overturned
+        data_tests:
+          - not_greater_than:
+              arguments:
+                compare_to: internal_appeals_filed
       - name: denial_total_status
         description: Whether the in-network denial total was reported, suppressed (1-10), or missing because the issuer is new to the Exchange.
         data_tests:
