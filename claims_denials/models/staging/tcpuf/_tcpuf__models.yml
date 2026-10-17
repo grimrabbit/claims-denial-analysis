@@ -12,9 +12,35 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: issuer_id
+        description: HIOS issuer ID; the first 5 characters of plan_id.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_tcpuf__issuer_claims')
+                field: issuer_id
       - name: denial_total_status
         description: Whether the in-network denial total was reported, suppressed (1-10), or missing because the plan is new.
         data_tests:
           - accepted_values:
               arguments:
                 values: ['reported', 'suppressed', 'new_plan']
+
+  - name: stg_tcpuf__issuer_claims
+    description: >
+      One row per issuer, collapsed from the issuer columns that repeat on every
+      plan row. HIOS issuer IDs are state-specific, so this is also one row per
+      issuer x state. Percent-overturned columns are dropped; rates are computed
+      downstream from the counts.
+    columns:
+      - name: issuer_id
+        description: 5-digit HIOS issuer ID, unique to one issuer in one state.
+        data_tests:
+          - unique
+          - not_null
+      - name: denial_total_status
+        description: Whether the in-network denial total was reported, suppressed (1-10), or missing because the issuer is new to the Exchange.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['reported', 'suppressed', 'new_issuer']
