@@ -1,0 +1,12 @@
+version: 2
+
+seeds:
+  - name: denial_reason_buckets
+    description: >
+      My classification of the 9 CMS in-network denial reason columns into
+      buckets. This is an analytical judgment, not CMS data; see docs/decisions.md.
+    columns:
+      - name: reason
+        data_tests:
+          - unique
+          - not_null

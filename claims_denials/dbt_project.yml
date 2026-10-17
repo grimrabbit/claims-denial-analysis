@@ -33,3 +33,5 @@ models:
   claims_denials:
     staging:
       +materialized: table
+    intermediate:
+      +materialized: table

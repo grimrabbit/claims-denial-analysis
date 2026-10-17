@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: int_plan_denials__by_reason
+    description: >
+      One row per plan x in-network denial reason, for plans with a reported
+      in-network denial total. Counts are denial reasons, not denied claims:
+      one claim can carry several reasons. Suppressed cells (1-10) stay as
+      rows with a null count and is_suppressed = true.
+    columns:
+      - name: plan_reason_id
+        description: Key for the grain, plan_id + reason.
+        data_tests:
+          - unique
+          - not_null
+      - name: reason
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('denial_reason_buckets')
+                field: reason
+      - name: bucket
+        description: My classification, from seeds/denial_reason_buckets.csv. Not a CMS field.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['provider_side_preventable', 'eligibility', 'not_preventable', 'unexplained']
