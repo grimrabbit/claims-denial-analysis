@@ -76,3 +76,13 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Decision:** The intermediate model keeps every plan × reason combination, including the 2,648 suppressed cells, with a null count and `is_suppressed = true`.
 - **Why:** Every plan then has exactly 9 rows, so the grain is complete and countable, and the suppression rate per reason can be reported. Sums skip the nulls, so the shares are unchanged.
 - **Alternative:** Drop null rows during the unpivot (the default behavior). Rejected because it makes suppressed cells invisible.
+
+## 2026-10-16: Headline leads with 34% of all reasons
+- **Decision:** The headline states that 34% of in-network denial reasons were provider-side preventable. The second sentence adds that among reasons with a known cause, that's more than half (53.31% = 34.24% ÷ 64.23%).
+- **Why:** 34% has one denominator, so it can be read and repeated in one pass. The 53% figure needs a qualifier ("of reasons with a known cause") that skimmers drop, and dropped, it reads as "53% of denials," which overstates the finding. Leading with the smaller number also shows nothing is being inflated.
+- **Alternative:** Lead with 53% of explained reasons. Rejected for readability and misreading risk; kept as the supporting line.
+
+## 2026-10-16: Out-of-network denied > received is a warning, not a failure
+- **Decision:** The `not_greater_than` test fails the build for in-network counts but only warns for out-of-network counts.
+- **Why:** In-network denials never exceed claims received, at plan or issuer level. Out-of-network, 2 issuers (73836 AK: 66,671 denied of 35,374 received; 37160 ND: 12,362 of 7,251) and 30 plans across 6 issuers report more denials than receipts. This is self-reported CMS data and the cause can't be determined from the file. Out-of-network counts aren't used in any v1 question, so failing the build would block the analysis over data it doesn't use, while removing the test would hide the issue.
+- **Alternative:** Fail on all rows, or drop the out-of-network test. Rejected: the first blocks the build, the second hides a real data-quality issue.

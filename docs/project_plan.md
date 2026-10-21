@@ -1,6 +1,6 @@
 # Claims Denial Analysis — Project Plan
 
-Created Oct 3, 2026 · Updated Oct 6, 2026 (M3 definitions settled) · @Danny
+Created Oct 3, 2026 · Updated Oct 16, 2026 (M3 closed; all 6 core tests passing) · @Danny
 
 ## Purpose
 
@@ -38,7 +38,11 @@ Every answer must end in one number a reader can repeat. Rankings describe denia
 - **"Provider-side," not "front-office":** administrative denials include billing-office causes (duplicates, untimely filing), so "front-office" would mislabel about a quarter of all reasons. Administrative also includes coordination of benefits and workers' comp / auto liability, which a provider can't fully prevent; CMS doesn't split these out, so the limitations section says so.
 - **"Member not covered" is reported separately, not in the headline.** Eligibility verification prevents some of it, but Marketplace enrollees with premium subsidies have a 3-month grace period: insurers can hold claims in months 2 and 3 and deny them if coverage ends retroactively. A front desk can verify active coverage on the date of service and still receive this denial. The data can't separate the two causes.
 
-**Headline (M3 draft):** 34% of in-network denial reasons reported by HealthCare.gov insurers in 2024 were administrative or authorization problems a provider's billing process can prevent. Another 36% were unexplained in public data. A second line adds that 7.29% were eligibility denials, partly preventable.
+**Headline paragraph (final, Oct 16):**
+
+> In 2024, 34% of the reasons HealthCare.gov insurers gave for denying in-network claims were problems a provider's billing process can prevent: administrative errors and missing prior authorizations. Among reasons with a known cause, that's more than half. We count reasons rather than claims because one denied claim can carry several reasons, and insurers report the two totals separately. Another 36% were labeled "other," so public data can't say why. For a billing manager, the place to start is administrative denials, the largest known cause at 25% of all reasons.
+
+"More than half" is 53.31%: 34.24% ÷ 64.23% (all reasons minus "other"). Eligibility denials (7.29%, partly preventable) are reported in the case study, not the headline.
 
 **M1 headline numbers (Ind QHP, out-of-network reason excluded, 78.6M reasons):**
 
@@ -82,11 +86,11 @@ KFF already publishes yearly analysis of the CMS file, so this project can't jus
 
 | Code | Meaning | Found in Ind QHP |
 | --- | --- | --- |
-| `**` | Suppressed for small cell size | 3,016 reason cells in plans with a reported total; 18 plan totals |
+| `**` | Suppressed for small cell size | 2,648 of the 9 in-network reason cells in plans with a reported total (3,016 counting the out-of-network reason); 18 plan totals |
 | `N/A` | Plan or issuer new to the Exchange | 1,600 plans (2026 plan IDs with no 2024 history) |
 | `*`, `***` | Not available / not required | None in the plan-level reason columns of in-scope plans |
 
-**Suppression threshold:** not documented for this file. The data shows it empirically: 7,853 cells report 0, the smallest positive value anywhere in the tab is 11, and no cell holds 1–10. Suppression therefore covers 1–10, consistent with CMS's general cell-size policy. At most 10 per cell × 3,016 cells = 30,160 hidden reasons, 0.04% of 78.6M.
+**Suppression threshold:** not documented for this file. The data shows it empirically: 7,853 cells report 0, the smallest positive value anywhere in the tab is 11, and no cell holds 1–10. Suppression therefore covers 1–10, consistent with CMS's general cell-size policy. At most 10 per cell × 2,648 in-network reason cells = 26,480 hidden reasons, 0.03% of 78.6M.
 
 **Denial reason columns (10)**
 
@@ -94,15 +98,25 @@ Referral required (includes prior authorization), out of network, services exclu
 
 The out-of-network reason applies to closed-network plans denying claims from out-of-network providers. It is not an in-network denial, so it is excluded from the reason shares, matching KFF.
 
-**Reconciliation to KFF (before any further exclusions)**
+**Reconciliation to KFF**
 
-| Measure | Mine | KFF |
-| --- | --- | --- |
-| Denied in-network claims, plan level | 65.58M | about 66M |
-| Denial reasons, excluding out-of-network | 78.61M | about 79M |
-| Denied in-network claims, issuer level (deduplicated to issuer × state) | 84.50M | about 85M |
-| In-network claims received, issuer level | 451.25M | about 451M |
-| Overall in-network denial rate | 18.73% | 19% |
+KFF publishes rounded figures, so the tolerance is half of KFF's rounding unit: a figure KFF rounds to the nearest million passes if mine is within 0.5M; a percentage rounded to the whole number passes within 0.5 points. Anything tighter would fail on rounding alone; anything looser would be an arbitrary number I picked.
+
+| Measure | Mine | KFF | Gap | Tolerance | Pass |
+| --- | --- | --- | --- | --- | --- |
+| Reporting insurers (issuer × state, 1,000+ claims) | 157 | 157 | 0 | exact | ✓ |
+| In-network claims received, issuer level | 451.25M | 451M | 0.25M | 0.5M | ✓ |
+| Denied in-network claims, issuer level | 84.50M | about 85M | 0.50M | 0.5M | ✓ (at the edge) |
+| Overall in-network denial rate | 18.73% | 19% | 0.27 pts | 0.5 pts | ✓ |
+| Denied in-network claims, plan level | 65.58M | about 66M | 0.42M | 0.5M | ✓ |
+| Denial reasons, excluding out-of-network | 78.61M | about 79M | 0.39M | 0.5M | ✓ |
+| Out-of-network claims received | 44.40M | 44M | 0.40M | 0.5M | ✓ |
+| Out-of-network denial rate | 37.10% | 37% | 0.10 pts | 0.5 pts | ✓ |
+| Reason shares: other / administrative / excluded / prior auth / medical necessity | 35.77 / 24.95 / 12.89 / 9.29 / 5.05% | 36 / 25 / 13 / 9 / 5% | ≤ 0.29 pts | 0.5 pts | ✓ |
+
+The 1,000-claim minimum changes nothing material: it removes 2 issuer × state groups with 302 claims received between them. The PY2026 file already excludes Illinois and Georgia.
+
+**Open for Q4 (M5):** internal appeals filed reconcile exactly: 262,982 across issuers with a reported denial total, matching KFF. The one issuer with a suppressed denial total adds 39 more. Overturned appeals don't yet: KFF reports 165,863 upheld, which implies 97,119 overturned, but the overturned column sums to 85,807 because 21 issuers suppress it. Reconcile before publishing any overturn rate.
 
 **M1 checks**
 
@@ -113,8 +127,8 @@ The out-of-network reason applies to closed-network plans denying claims from ou
 - ☑ Row counts, tab names, and exact column names.
 - ☑ Null and code rates for the reason columns.
 - ☑ Suppression threshold: 1–10, inferred from the data.
-- ☑ Rows where denied > received: none at the issuer level. Plan-level check runs as a dbt test in M2.
-- ☐ Reconciliation tolerance for the KFF tests, after checking whether KFF's 1,000-claim issuer minimum changes the totals.
+- ☑ Rows where denied > received: none in-network at either level. Out-of-network: 2 issuers (73836 AK, 37160 ND) and 30 plans across 6 issuers report more denials than claims received. Out-of-network counts are outside the v1 analysis; the dbt test warns on them instead of failing.
+- ☑ Reconciliation tolerance: half of KFF's rounding unit. All nine checks pass; the 1,000-claim minimum removes 302 claims.
 
 ## Deliverable structure
 
@@ -160,7 +174,7 @@ The KPIs are what the manager would track going forward. They are not computed f
 The stack is local and free: Python pulls raw files, DuckDB stores them, dbt-core models and tests them, and Tableau Public presents the result. Everything lives in one GitHub repo.
 
 - **Ingest (Python):** one script downloads the source file into data/raw/ unchanged, named by source and plan year. Raw files are never edited by hand.
-- **Load (DuckDB):** raw files load into a local DuckDB database as raw tables, with no server needed. Every column loads as text (`all_varchar`) so legend codes can't break the load; typing happens in staging.
+- **Load (DuckDB):** dbt reads the raw xlsx directly as a dbt source (`read_xlsx` via the dbt-duckdb `external_location` config), so there is no separate load step. Every column loads as text (`all_varchar`) so legend codes can't break the load; typing happens in staging. Staging models are materialized as tables, so the database file never depends on the xlsx path after a build.
 - **Transform and test (dbt-core + dbt-duckdb):** staging, intermediate, and mart models in SQL, with tests and generated docs.
 - **Export:** mart tables export to CSV, since Tableau Public can't connect to DuckDB.
 - **Present (Tableau Public):** one view that illustrates the headline. It supports the finding rather than being the product.
@@ -174,9 +188,10 @@ v1 has six models across three layers, built only as far as Q1, Q2, and Q4 need.
 
 | Layer | Model | Grain (one row per) | Purpose |
 | --- | --- | --- | --- |
-| Staging | stg_tcpuf__issuer_claims | Issuer × state | Select distinct issuer × state from Ind QHP; type issuer-level claims, denials, resubmissions, appeals |
-| Staging | stg_tcpuf__plan_denials | Plan | Ind QHP only; `try_cast` plan-level counts so `**` and `N/A` become null; keep plans with a reported in-network denial total |
-| Intermediate | int_plan_denials__by_reason | Plan × reason | Unpivot the 9 in-network reason columns into rows; tag each reason's bucket |
+| Staging | stg_tcpuf__issuer_claims | Issuer (= issuer × state; HIOS issuer IDs are state-specific) | `select distinct` collapses the repeated issuer columns to 185 rows; types claims, denials, resubmissions, appeals; `denial_total_status` records reported (158) / suppressed (1) / new_issuer (26); percent columns dropped |
+| Staging | stg_tcpuf__plan_denials | Plan | Ind QHP only; all 4,159 plans kept; `try_cast` plan-level counts so `**` and `N/A` become null; `denial_total_status` records reported / suppressed / new_plan. Downstream models filter to `reported` (2,541 plans) |
+| Seed | denial_reason_buckets | Reason | My classification of the 9 reasons into 4 buckets, as a version-controlled CSV |
+| Intermediate | int_plan_denials__by_reason | Plan × reason | Reported plans only; unpivot the 9 in-network reason columns into rows (22,869 = 2,541 × 9); suppressed cells kept as rows flagged `is_suppressed`; bucket joined from the seed |
 | Mart | fct_plan_denials | Plan × reason | Answers Q2 |
 | Mart | fct_issuer_denial_rates | Issuer × state | Answers Q1 |
 | Mart | fct_issuer_appeals | Issuer × state | Answers Q4 |
@@ -186,14 +201,15 @@ v1 has six models across three layers, built only as far as Q1, Q2, and Q4 need.
 - Never compute a denial rate from fct_plan_denials. Each plan's claims received repeats on every reason row, so summing it inflates the denominator by the number of reasons (9x).
 - Never sum issuer columns from the raw plan rows. stg_tcpuf__issuer_claims collapses them to one row per issuer × state first.
 
-**Tests (6 for v1):**
+**Tests (6 core for v1, plus not_null and accepted_values checks on staging keys and status columns):**
 
 - unique on plan ID in stg_tcpuf__plan_denials
-- unique on issuer ID × state in stg_tcpuf__issuer_claims
+- unique on issuer ID in stg_tcpuf__issuer_claims (issuer IDs are state-specific: 185 IDs = 185 issuer × state pairs)
+- relationships: every plan's issuer_id exists in stg_tcpuf__issuer_claims
 - accepted_values on reason in int_plan_denials__by_reason (the 9 in-network reasons)
-- Custom: claims denied ≤ claims received, for every row
-- Reconciliation: total reasons (excluding out-of-network) match KFF's published figure within the M1 tolerance
-- Reconciliation: overall in-network denial rate matches KFF's published rate within the M1 tolerance
+- Custom generic test `not_greater_than`: claims denied ≤ claims received, in-network (error) and out-of-network (warn, known issue), on both staging models; also internal appeals overturned ≤ filed
+- Reconciliation: total reasons (excluding out-of-network) within 0.5M of KFF's 79M (built Oct 8 as a singular test: 78,605,719 passes)
+- Reconciliation: overall in-network denial rate within 0.5 points of KFF's 19% (built Oct 16: 18.73% passes)
 
 An earlier draft had a test that reason counts ≤ total denials. It is dropped: reasons legitimately exceed denials because one claim can carry several reasons.
 
@@ -203,10 +219,10 @@ An earlier draft had a test that reason counts ≤ total denials. It is dropped:
 
 The headline number lands by Oct 25. M4 through M7 are weekend-sized and finish by mid-December.
 
-- ☐ **M1 — Explore** (due Oct 11, 2026). Mostly done Oct 5: profile above. Remaining: the denied > received check and the reconciliation tolerance.
-- ☐ **M2 — Set up** (due Oct 18, 2026). GitHub repo, DuckDB, dbt-core, and decisions.md. Deliverable: 2 staging models and 2 tests passing.
-- ☐ **M3 — First finding** (due Oct 25, 2026). Definitions settled Oct 6. Answer Q2 from staging and confirm the M1 numbers in dbt. Deliverable: the headline number and one plain-English paragraph.
-- ☐ **M4 — Finish the model** (due Nov 15, 2026). Build the remaining models and reach 6 tests, including both KFF reconciliations. Deliverable: dbt build runs clean.
+- ☑ **M1 — Explore** (due Oct 11, 2026). Done Oct 6: profile and reconciliation above.
+- ☑ **M2 — Set up** (due Oct 18, 2026). Done Oct 8: environment, dbt project, source, both staging models, 7 tests passing (`dbt build`: PASS=9).
+- ☑ **M3 — First finding** (due Oct 25, 2026). Done Oct 16: Q2 produced and tested in dbt (34.24% provider-side preventable, 35.77% unexplained, 22.70% not preventable, 7.29% eligibility); headline paragraph above.
+- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing (`dbt build`: PASS=24, WARN=2 known out-of-network issues). Remaining: the three marts (fct_plan_denials, fct_issuer_denial_rates, fct_issuer_appeals) and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
 - ☐ **M5 — Analyze** (due Nov 29, 2026). Answer Q1 with the minimum-volume rule and within-state gap, then Q4 (resubmission ratio first, appeals second) if time allows. Deliverable: one headline number per question.
 - ☐ **M6 — Present** (due Dec 6, 2026). One Tableau Public view that makes the headline visible: in-network denial reasons by bucket. Time-boxed to one weekend. Deliverable: published link and a static image for the README.
 - ☐ **M7 — Recommend and write up** (due Dec 13, 2026). A one-page findings memo for a hypothetical clinic billing manager with 3 recommendations in the finding → action → owner → KPI format; the README (finding and memo first, trust panel, limitations box, chart, dashboard link, reproduce steps); and the case study with the CARC appendix. Generate the dbt docs and link them, without polishing them. Deliverable: a reader can repeat the headline finding after a 60-second skim.
@@ -229,7 +245,7 @@ Scope is fixed at one dataset, one plan year, and three questions.
 | "Other" is 35.77% of reasons, so the preventable share is a floor | Report "other" as its own bucket; "a third of denial reasons are unexplained in public data" is itself a finding |
 | Headline misread as "% of denials" | Always say "% of denial reasons"; explain multi-reason counting in one sentence in the README |
 | "Preventable" is challenged as my own label | Definition, the dictionary's prior-auth wording, and the bucket for each column logged in decisions.md |
-| Reconciliation fails because KFF excluded issuers | Totals already match within 1% before exclusions; apply KFF's 1,000-claim minimum and document any remaining gap |
+| Reconciliation fails | All nine checks pass at KFF's rounding precision; the issuer-level denied count sits exactly at the edge, so any filter change must rerun the test |
 | Findings read as "worst insurers" | Frame as denial patterns; report Q1 as a distribution with a 1,000-claim minimum, never named extremes; quote CMS's statement that denial counts don't indicate plan quality |
 | Appeals read as a provider action | State that appeals are filed by enrollees; lead Q4 with the provider-side resubmission ratio |
 | Recommendations overclaim what the data measures | Three-tier labels on every number; KPIs labeled as proposed; limitations box names what the data can't measure |
@@ -255,6 +271,15 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - Oct 6: The bucket is "provider-side preventable," not "front-office."
 - Oct 6: Member-not-covered is reported separately (7.29%), not in the headline.
 - Oct 6: Every number is tagged CMS data, my classification, or illustrative.
+- Oct 6: Reconciliation tolerance is half of KFF's rounding unit.
+- Oct 7: Staging keeps every row and flags status; filtering happens downstream.
+- Oct 7: Staging models are materialized as tables, not views.
+- Oct 8: The issuer model's key is issuer_id alone; HIOS IDs are state-specific.
+- Oct 8: The issuer model collapses rows with `select distinct` and relies on the unique test to catch conflicts, rather than `group by` with an aggregate.
+- Oct 8: The reason-to-bucket classification lives in a dbt seed, not a CASE statement.
+- Oct 8: Suppressed reason cells stay in the intermediate model as flagged rows.
+- Oct 16: The headline leads with 34% of all reasons; "more than half of reasons with a known cause" is the supporting line.
+- Oct 16: Out-of-network denied > received is a warning, not a failure.
 
 ## Sources
 
