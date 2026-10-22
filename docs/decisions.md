@@ -96,3 +96,18 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Decision:** `fct_issuer_denial_rates` includes `denial_rate` (this issuer's denied / received) next to the counts. The state rate is computed as a ratio of sums with window functions, not by averaging issuer rates.
 - **Why:** An issuer's own rate is correct at issuer grain, and Tableau needs it to plot issuers. Keeping the counts in the same table means any state or national figure can be re-summed correctly. The column description warns never to average it.
 - **Alternative:** Store counts only and compute every rate in Tableau. Rejected because it pushes core logic into the dashboard, where it isn't tested.
+
+## 2026-10-21: Q4 ratios use matched sets
+- **Decision:** Each Q4 ratio includes only issuers that report both its numerator and its denominator: resubmissions (157 issuers), appeal rate (147), overturn rate (135). The mart carries `has_*` flags for each set.
+- **Why:** Suppressed cells hide values from 1 to 10. If an issuer reports 2,600 appeals filed but suppresses its overturned count, treating the missing overturned count as zero adds 2,600 appeals to the denominator and none to the numerator, understating the overturn rate. Matching keeps both sides from the same issuers. The overturn rate is 33.6% matched vs. 32.6% with suppressed values as zero.
+- **Alternative:** Treat suppressed values as zero, as KFF does. Rejected because it biases ratios whenever the numerator is suppressed more often than the denominator, which is the case for overturned appeals (21 issuers suppressed) vs. appeals filed (11).
+
+## 2026-10-21: Appeal rate denominator is all denials
+- **Decision:** Internal appeals per 100 denials divides by in-network plus out-of-network denials (0.26).
+- **Why:** CMS reports appeals at the issuer level without splitting them by network, so an appeal can be of either kind of denial. KFF divides by in-network denials only; both versions are under 1%.
+- **Alternative:** In-network denials only, to match KFF's wording. Rejected because it pairs a numerator covering all denials with a denominator covering some.
+
+## 2026-10-21: Report the upheld share, not the upheld count
+- **Decision:** Q4 reports that 66.4% of internal appeals were upheld (33.6% overturned), not a count of upheld appeals.
+- **Why:** The share matches KFF's 66%. The count does not: 169,566 from the matched set vs. KFF's 165,863, a 3,703 gap that KFF's published methodology doesn't explain. Appeals filed match KFF exactly (262,982), and that's tested.
+- **Alternative:** Report KFF's count. Rejected because I can't reproduce it.

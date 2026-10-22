@@ -1,6 +1,6 @@
 # Claims Denial Analysis — Project Plan
 
-Created Oct 3, 2026 · Updated Oct 21, 2026 (Q1 mart built) · @Danny
+Created Oct 3, 2026 · Updated Oct 21, 2026 (Q1 and Q4 marts built) · @Danny
 
 ## Purpose
 
@@ -116,7 +116,9 @@ KFF publishes rounded figures, so the tolerance is half of KFF's rounding unit: 
 
 The 1,000-claim minimum changes nothing material: it removes 2 issuer × state groups with 302 claims received between them. The PY2026 file already excludes Illinois and Georgia.
 
-**Open for Q4 (M5):** internal appeals filed reconcile exactly: 262,982 across issuers with a reported denial total, matching KFF. The one issuer with a suppressed denial total adds 39 more. Overturned appeals don't yet: KFF reports 165,863 upheld, which implies 97,119 overturned, but the overturned column sums to 85,807 because 21 issuers suppress it. Reconcile before publishing any overturn rate.
+**Q4 reconciliation (Oct 21):** internal appeals filed match KFF exactly (262,982; tested). The upheld *share* matches: among the 135 issuers reporting both appeals filed and overturned, 66.4% of internal appeals were upheld vs. KFF's 66%. The upheld *count* does not: 169,566 vs. KFF's 165,863, a 3,703 gap KFF's methodology doesn't explain. Report the percentage, not the count.
+
+**Q4 numbers (built in dbt Oct 21, `analyses/q4_after_denial.sql`):** 38.0 in-network resubmissions per 100 in-network denials (157 issuers); 0.26 internal appeals per 100 denials (147 issuers); 33.6% of internal appeals overturned (135 issuers). Each ratio uses only issuers that report both of its numbers.
 
 **M1 checks**
 
@@ -194,7 +196,7 @@ v1 has six models across three layers, built only as far as Q1, Q2, and Q4 need.
 | Intermediate | int_plan_denials__by_reason | Plan × reason | Reported plans only; unpivot the 9 in-network reason columns into rows (22,869 = 2,541 × 9); suppressed cells kept as rows flagged `is_suppressed`; bucket joined from the seed |
 | Mart | fct_plan_denials | Plan × reason | Answers Q2 |
 | Mart | fct_issuer_denial_rates | Issuer (158 with a reported total) | Answers Q1. Issuer rate, 1,000-claim flag, qualifying issuers per state, state rate (ratio of sums via window functions), and `is_in_q1_comparison` |
-| Mart | fct_issuer_appeals | Issuer × state | Answers Q4 |
+| Mart | fct_issuer_appeals | Issuer (158 with a reported total) | Answers Q4. Counts only, plus `has_*` flags marking which ratios each issuer can join |
 
 **Grain rules:**
 
@@ -222,7 +224,7 @@ The headline number lands by Oct 25. M4 through M7 are weekend-sized and finish 
 - ☑ **M1 — Explore** (due Oct 11, 2026). Done Oct 6: profile and reconciliation above.
 - ☑ **M2 — Set up** (due Oct 18, 2026). Done Oct 8: environment, dbt project, source, both staging models, 7 tests passing (`dbt build`: PASS=9).
 - ☑ **M3 — First finding** (due Oct 25, 2026). Done Oct 16: Q2 produced and tested in dbt (34.24% provider-side preventable, 35.77% unexplained, 22.70% not preventable, 7.29% eligibility); headline paragraph above.
-- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: fct_issuer_denial_rates built (`dbt build`: PASS=30, WARN=2). Remaining: fct_plan_denials, fct_issuer_appeals, and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
+- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: fct_issuer_denial_rates and fct_issuer_appeals built (`dbt build`: PASS=35, WARN=2). Remaining: fct_plan_denials and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
 - ☐ **M5 — Analyze** (due Nov 29, 2026). Answer Q1 with the minimum-volume rule and within-state gap, then Q4 (resubmission ratio first, appeals second) if time allows. Deliverable: one headline number per question.
 - ☐ **M6 — Present** (due Dec 6, 2026). One Tableau Public view that makes the headline visible: in-network denial reasons by bucket. Time-boxed to one weekend. Deliverable: published link and a static image for the README.
 - ☐ **M7 — Recommend and write up** (due Dec 13, 2026). A one-page findings memo for a hypothetical clinic billing manager with 3 recommendations in the finding → action → owner → KPI format; the README (finding and memo first, trust panel, limitations box, chart, dashboard link, reproduce steps); and the case study with the CARC appendix. Generate the dbt docs and link them, without polishing them. Deliverable: a reader can repeat the headline finding after a 60-second skim.
@@ -282,6 +284,8 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - Oct 16: Out-of-network denied > received is a warning, not a failure.
 - Oct 21: Q1 compares issuers with 1,000+ in-network claims in states with 2+ such issuers.
 - Oct 21: The Q1 mart stores each issuer's own rate alongside its counts; rollups always re-sum the counts.
+- Oct 21: Q4 ratios use matched sets: an issuer counts only if both the numerator and denominator are reported.
+- Oct 21: The appeal rate divides by all denials (in- and out-of-network), since appeals aren't split by network.
 
 ## Sources
 
