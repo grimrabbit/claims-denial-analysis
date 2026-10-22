@@ -1,8 +1,8 @@
 -- grain: one row per issuer with a reported in-network denial total (158 rows)
 -- answers Q4: what happens after a denial? resubmissions (provider action)
 -- and internal / external appeals (enrollee action)
--- counts only; rates are computed in analyses/q4_after_denial.sql using
--- matched sets (issuers that report both the numerator and the denominator)
+-- counts only; ratios are computed in analyses/q4_after_denial.sql, with
+-- suppressed values (1-10) bounded rather than dropped or set to 0
 
 with issuers as (
 
@@ -31,14 +31,7 @@ final as (
         internal_appeals_filed,
         internal_appeals_overturned,
         external_appeals_filed,
-        external_appeals_overturned,
-
-        -- which ratios this issuer can contribute to (both sides reported)
-        claims_resubmitted_in_network is not null                         as has_resubmission_data,
-        internal_appeals_filed is not null
-            and claims_denied_out_of_network is not null                  as has_appeal_rate_data,
-        internal_appeals_filed is not null
-            and internal_appeals_overturned is not null                   as has_appeal_outcome_data
+        external_appeals_overturned
 
     from issuers
 

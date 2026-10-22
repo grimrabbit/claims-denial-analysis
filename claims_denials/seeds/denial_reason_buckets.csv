@@ -1,10 +1,10 @@
-reason,reason_label,bucket,bucket_basis
-prior_auth_referral,Prior authorization or referral required,provider_side_preventable,Prevented by tracking authorizations and referrals before the date of service
-administrative,Administrative,provider_side_preventable,"Prevented by correct registration, clean claim submission, and timely filing"
-member_not_covered,Member not covered on date of service,eligibility,"Partly preventable by eligibility checks; Marketplace grace periods can terminate coverage retroactively"
-services_excluded,Service excluded or not covered by plan,not_preventable,Plan design
-medical_necessity,Not medically necessary (excluding behavioral health),not_preventable,Clinical determination
-medical_necessity_bh,Not medically necessary (behavioral health),not_preventable,Clinical determination
-benefit_limit,Enrollee benefit limit reached,not_preventable,Plan design
-experimental,"Investigational, experimental, or cosmetic",not_preventable,Clinical determination or plan design
-other,Other or unspecified,unexplained,Public data does not identify the cause
+reason,reason_label,bucket,bucket_label,bucket_sort,bucket_basis
+prior_auth_referral,Prior authorization or referral required,provider_side_preventable,Provider-side preventable,1,Prevented by tracking authorizations and referrals before the date of service
+administrative,Administrative,provider_side_preventable,Provider-side preventable,1,"Prevented by correct registration, clean claim submission, and timely filing"
+member_not_covered,Member not covered on date of service,eligibility,Eligibility (partly preventable),2,"Partly preventable by eligibility checks; Marketplace grace periods can terminate coverage retroactively"
+services_excluded,Service excluded or not covered by plan,not_preventable,Not preventable by provider,3,Plan design
+medical_necessity,Not medically necessary (excluding behavioral health),not_preventable,Not preventable by provider,3,Clinical determination
+medical_necessity_bh,Not medically necessary (behavioral health),not_preventable,Not preventable by provider,3,Clinical determination
+benefit_limit,Enrollee benefit limit reached,not_preventable,Not preventable by provider,3,Plan design
+experimental,"Investigational, experimental, or cosmetic",not_preventable,Not preventable by provider,3,Clinical determination or plan design
+other,Other or unspecified,unexplained,Unexplained in public data,4,Public data does not identify the cause

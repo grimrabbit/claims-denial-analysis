@@ -28,9 +28,8 @@ models:
   - name: fct_issuer_appeals
     description: >
       One row per issuer with a reported in-network denial total. Answers Q4.
-      Counts only. The has_* flags mark which ratios an issuer can contribute to:
-      an issuer counts toward a ratio only if both its numerator and denominator
-      are reported, so suppressed cells (1-10) never enter as zero.
+      Counts only; suppressed cells (1-10) are null. Ratios are computed in
+      analyses/q4_after_denial.sql with suppressed values bounded at 1 and 10.
     columns:
       - name: issuer_id
         data_tests:
@@ -40,3 +39,21 @@ models:
               arguments:
                 to: ref('stg_tcpuf__issuer_claims')
                 field: issuer_id
+
+  - name: fct_plan_denials
+    description: >
+      One row per plan x in-network denial reason, with readable labels for
+      Tableau. Answers Q2. Counts are denial reasons, not denied claims.
+      Contains no claim totals on purpose: with 9 rows per plan, any plan total
+      would repeat 9 times. For denial rates, use fct_issuer_denial_rates.
+    columns:
+      - name: plan_reason_id
+        data_tests:
+          - unique
+          - not_null
+      - name: bucket_label
+        data_tests:
+          - not_null
+      - name: issuer_name
+        data_tests:
+          - not_null

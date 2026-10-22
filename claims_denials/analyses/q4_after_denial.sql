@@ -1,5 +1,8 @@
 -- Q4: what happens after a denial?
--- each ratio uses a matched set: only issuers that report both sides of it
+-- Suppressed counts (**) are real values from 1 to 10. Rather than drop those
+-- issuers or treat the values as 0, each ratio is computed twice: once with
+-- every suppressed numerator at 1 (low) and once at 10 (high). The true value
+-- lies between. Issuers whose denominator is suppressed or missing are left out.
 
 with issuers as (
 
@@ -10,45 +13,51 @@ with issuers as (
 resubmissions as (
 
     select
+        'resubmissions per 100 in-network denials' as metric,
         count(*) as issuers,
-        round(100.0 * sum(claims_resubmitted_in_network) / sum(claims_denied_in_network), 1)
-            as resubmissions_per_100_in_network_denials
+        100.0 * sum(coalesce(claims_resubmitted_in_network, 1)) / sum(claims_denied_in_network)  as low,
+        100.0 * sum(coalesce(claims_resubmitted_in_network, 10)) / sum(claims_denied_in_network) as high
     from issuers
-    where has_resubmission_data
 
 ),
 
 appeal_rate as (
 
     select
+        'internal appeals per 100 denials (in- and out-of-network)' as metric,
         count(*) as issuers,
-        sum(internal_appeals_filed) as internal_appeals_filed,
-        round(100.0 * sum(internal_appeals_filed) / sum(claims_denied_total), 2)
-            as internal_appeals_per_100_denials
+        100.0 * sum(coalesce(internal_appeals_filed, 1)) / sum(claims_denied_total)  as low,
+        100.0 * sum(coalesce(internal_appeals_filed, 10)) / sum(claims_denied_total) as high
     from issuers
-    where has_appeal_rate_data
+    where claims_denied_total is not null
 
 ),
 
 appeal_outcomes as (
 
     select
+        '% of internal appeals overturned' as metric,
         count(*) as issuers,
-        round(100.0 * sum(internal_appeals_overturned) / sum(internal_appeals_filed), 1)
-            as pct_internal_appeals_overturned
+        100.0 * sum(coalesce(internal_appeals_overturned, 1)) / sum(internal_appeals_filed)  as low,
+        100.0 * sum(coalesce(internal_appeals_overturned, 10)) / sum(internal_appeals_filed) as high
     from issuers
-    where has_appeal_outcome_data
+    where internal_appeals_filed is not null
+
+),
+
+combined as (
+
+    select * from resubmissions
+    union all
+    select * from appeal_rate
+    union all
+    select * from appeal_outcomes
 
 )
 
 select
-    resubmissions.issuers   as resubmission_issuers,
-    resubmissions.resubmissions_per_100_in_network_denials,
-    appeal_rate.issuers     as appeal_rate_issuers,
-    appeal_rate.internal_appeals_filed,
-    appeal_rate.internal_appeals_per_100_denials,
-    appeal_outcomes.issuers as appeal_outcome_issuers,
-    appeal_outcomes.pct_internal_appeals_overturned
-from resubmissions
-cross join appeal_rate
-cross join appeal_outcomes
+    metric,
+    issuers,
+    round(low, 2)  as low,
+    round(high, 2) as high
+from combined
