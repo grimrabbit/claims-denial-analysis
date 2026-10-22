@@ -24,3 +24,19 @@ models:
         description: True if the issuer has 1,000+ in-network claims and at least one other qualifying issuer in its state.
         data_tests:
           - not_null
+
+  - name: fct_issuer_appeals
+    description: >
+      One row per issuer with a reported in-network denial total. Answers Q4.
+      Counts only. The has_* flags mark which ratios an issuer can contribute to:
+      an issuer counts toward a ratio only if both its numerator and denominator
+      are reported, so suppressed cells (1-10) never enter as zero.
+    columns:
+      - name: issuer_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tcpuf__issuer_claims')
+                field: issuer_id
