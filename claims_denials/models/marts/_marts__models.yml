@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: fct_issuer_denial_rates
+    description: >
+      One row per issuer with a reported in-network denial total. Answers Q1.
+      denial_rate is this issuer's own rate (denied / received). To combine
+      issuers, sum the claim counts and divide; never average denial_rate.
+      state_denial_rate is the ratio of sums across qualifying issuers in the state.
+    columns:
+      - name: issuer_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tcpuf__issuer_claims')
+                field: issuer_id
+      - name: denial_rate
+        description: Denied / received, in-network, for this issuer. Between 0 and 1.
+        data_tests:
+          - not_null
+      - name: is_in_q1_comparison
+        description: True if the issuer has 1,000+ in-network claims and at least one other qualifying issuer in its state.
+        data_tests:
+          - not_null
