@@ -122,3 +122,8 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Decision:** The plan x reason mart has denial reason counts and labels but no claims-received or denied-claims columns.
 - **Why:** Each plan has 9 rows. Any plan-level total on this table would repeat 9 times, and summing it in Tableau would overstate it 9x. Leaving the columns out makes that mistake impossible from this table; denial rates come from fct_issuer_denial_rates.
 - **Alternative:** Include the totals with a warning in the description. Rejected because a description doesn't stop a drag-and-drop sum.
+
+## 2026-10-21: Ingest script pins the raw file's fingerprint
+- **Decision:** `scripts/ingest.py` downloads the file, then compares its SHA-256 fingerprint to the version the analysis was built on (`27379dc7…4b1f`). A mismatch prints a warning and exits with an error code; it doesn't delete or block anything.
+- **Why:** CMS can republish a file at the same URL (the dataset page shows an update date). Without a check, a rebuild could silently produce different numbers. The fingerprint makes "same input" verifiable, and the KFF tests then show whether the output still holds.
+- **Alternative:** Download without checking. Rejected because a changed file would go unnoticed.

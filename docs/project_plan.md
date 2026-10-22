@@ -1,6 +1,6 @@
 # Claims Denial Analysis — Project Plan
 
-Created Oct 3, 2026 · Updated Oct 21, 2026 (all marts built; Q4 method corrected) · @Danny
+Created Oct 3, 2026 · Updated Oct 21, 2026 (ingest script built) · @Danny
 
 ## Purpose
 
@@ -73,7 +73,7 @@ KFF already publishes yearly analysis of the CMS file, so this project can't jus
 
 ## Data profile (M1, PY2026 file)
 
-**Documentation:** the PY2026 dataset page has no data dictionary. The [PY24 dictionary](https://www.cms.gov/files/document/transparency-coverage-puf-datadictionary-py24.pdf) defines every column in this file and is used as the reference. The PY26 data disclaimer says nothing about suppression or legend codes.
+**Documentation:** the PY2026 dataset page on data.healthcare.gov lists no data dictionary, but CMS publishes one separately: the [PY26 data dictionary](https://www.cms.gov/files/document/transparency-coverage-puf-datadictionary-py26.pdf) (titled "Transparency in QHP Coverage PUF"), which confirms the file holds plan year 2024 data. Column definitions were taken from the [PY24 dictionary](https://www.cms.gov/files/document/transparency-coverage-puf-datadictionary-py24.pdf) during M1. Neither dictionary nor the PY26 disclaimer defines the suppression codes.
 
 **File structure**
 
@@ -175,7 +175,7 @@ The KPIs are what the manager would track going forward. They are not computed f
 
 The stack is local and free: Python pulls raw files, DuckDB stores them, dbt-core models and tests them, and Tableau Public presents the result. Everything lives in one GitHub repo.
 
-- **Ingest (Python):** one script downloads the source file into data/raw/ unchanged, named by source and plan year. Raw files are never edited by hand.
+- **Ingest (Python):** `scripts/ingest.py` downloads the source file from data.healthcare.gov into data/raw/ unchanged, named by source and plan year, then checks its SHA-256 fingerprint against the version the analysis was built on. Standard library only; no extra dependencies. Raw files are never edited by hand.
 - **Load (DuckDB):** dbt reads the raw xlsx directly as a dbt source (`read_xlsx` via the dbt-duckdb `external_location` config), so there is no separate load step. Every column loads as text (`all_varchar`) so legend codes can't break the load; typing happens in staging. Staging models are materialized as tables, so the database file never depends on the xlsx path after a build.
 - **Transform and test (dbt-core + dbt-duckdb):** staging, intermediate, and mart models in SQL, with tests and generated docs.
 - **Export:** mart tables export to CSV, since Tableau Public can't connect to DuckDB.
@@ -224,7 +224,7 @@ The headline number lands by Oct 25. M4 through M7 are weekend-sized and finish 
 - ☑ **M1 — Explore** (due Oct 11, 2026). Done Oct 6: profile and reconciliation above.
 - ☑ **M2 — Set up** (due Oct 18, 2026). Done Oct 8: environment, dbt project, source, both staging models, 7 tests passing (`dbt build`: PASS=9).
 - ☑ **M3 — First finding** (due Oct 25, 2026). Done Oct 16: Q2 produced and tested in dbt (34.24% provider-side preventable, 35.77% unexplained, 22.70% not preventable, 7.29% eligibility); headline paragraph above.
-- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: all three marts built (`dbt build`: PASS=40, WARN=2). Remaining: the ingest script. Deliverable: dbt build runs clean from a fresh clone.
+- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: all three marts and `scripts/ingest.py` built; README has the headline and reproduce steps. Remaining: a fresh-clone test (clone, follow the README, `dbt build` passes), then the M4 interview check. Deliverable: dbt build runs clean from a fresh clone.
 - ☐ **M5 — Analyze** (due Nov 29, 2026). Answer Q1 with the minimum-volume rule and within-state gap, then Q4 (resubmission ratio first, appeals second) if time allows. Deliverable: one headline number per question.
 - ☐ **M6 — Present** (due Dec 6, 2026). One Tableau Public view that makes the headline visible: in-network denial reasons by bucket. Time-boxed to one weekend. Deliverable: published link and a static image for the README.
 - ☐ **M7 — Recommend and write up** (due Dec 13, 2026). A one-page findings memo for a hypothetical clinic billing manager with 3 recommendations in the finding → action → owner → KPI format; the README (finding and memo first, trust panel, limitations box, chart, dashboard link, reproduce steps); and the case study with the CARC appendix. Generate the dbt docs and link them, without polishing them. Deliverable: a reader can repeat the headline finding after a 60-second skim.
@@ -286,6 +286,7 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - Oct 21: The Q1 mart stores each issuer's own rate alongside its counts; rollups always re-sum the counts.
 - Oct 21: Q4 ratios bound suppressed values at 1 and 10 (replaces the earlier matched-set rule the same day).
 - Oct 21: fct_plan_denials carries no claim totals, so fan-out can't happen from it.
+- Oct 21: The ingest script pins the raw file's SHA-256 fingerprint and warns if CMS republishes it.
 - Oct 21: The appeal rate divides by all denials (in- and out-of-network), since appeals aren't split by network.
 
 ## Sources
@@ -293,6 +294,8 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - [CMS Health Insurance Exchange Public Use Files](https://www.cms.gov/marketplace/resources/data/public-use-files)
 - [CMS Transparency in Coverage data dictionary, PY22](https://www.cms.gov/files/document/transparency-in-coverage-datadictionary-py22.pdf)
 - [CMS Transparency in Coverage data dictionary, PY24](https://www.cms.gov/files/document/transparency-coverage-puf-datadictionary-py24.pdf)
+- [CMS Transparency in QHP Coverage PUF data dictionary, PY26](https://www.cms.gov/files/document/transparency-coverage-puf-datadictionary-py26.pdf)
+- [Transparency in Coverage PUF PY2026, catalog entry with download URL](https://catalog.data.gov/dataset/transparency-in-coverage-puf-py2026)
 - [CMS Transparency PUF data disclaimer, PY26](https://www.cms.gov/files/document/transparency-coverage-datadisclaimer-py26.pdf-0)
 - [CMS cell size suppression policy (via ResDAC)](https://resdac.org/node/1506)
 - [KFF: Claims denials and appeals in ACA Marketplace plans, 2024](https://www.kff.org/patient-consumer-protections/claims-denials-and-appeals-in-aca-marketplace-plans-in-2024/)
