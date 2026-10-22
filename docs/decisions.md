@@ -86,3 +86,13 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Decision:** The `not_greater_than` test fails the build for in-network counts but only warns for out-of-network counts.
 - **Why:** In-network denials never exceed claims received, at plan or issuer level. Out-of-network, 2 issuers (73836 AK: 66,671 denied of 35,374 received; 37160 ND: 12,362 of 7,251) and 30 plans across 6 issuers report more denials than receipts. This is self-reported CMS data and the cause can't be determined from the file. Out-of-network counts aren't used in any v1 question, so failing the build would block the analysis over data it doesn't use, while removing the test would hide the issue.
 - **Alternative:** Fail on all rows, or drop the out-of-network test. Rejected: the first blocks the build, the second hides a real data-quality issue.
+
+## 2026-10-21: Q1 comparison set
+- **Decision:** An issuer is in the Q1 comparison if it has at least 1,000 in-network claims received and at least one other qualifying issuer in its state. Result: 156 issuers in 29 states.
+- **Why:** The 1,000-claim minimum matches KFF and keeps a tiny issuer's rate from defining a state's spread. A spread needs at least two issuers, so Wyoming (one qualifying issuer) drops out. Two issuers fall below the minimum (302 claims combined).
+- **Alternative:** Include every issuer with a reported total. Rejected because very small denominators produce extreme rates that say little about patterns.
+
+## 2026-10-21: The Q1 mart stores issuer rates, but rollups use counts
+- **Decision:** `fct_issuer_denial_rates` includes `denial_rate` (this issuer's denied / received) next to the counts. The state rate is computed as a ratio of sums with window functions, not by averaging issuer rates.
+- **Why:** An issuer's own rate is correct at issuer grain, and Tableau needs it to plot issuers. Keeping the counts in the same table means any state or national figure can be re-summed correctly. The column description warns never to average it.
+- **Alternative:** Store counts only and compute every rate in Tableau. Rejected because it pushes core logic into the dashboard, where it isn't tested.

@@ -1,6 +1,6 @@
 # Claims Denial Analysis — Project Plan
 
-Created Oct 3, 2026 · Updated Oct 16, 2026 (M3 closed; all 6 core tests passing) · @Danny
+Created Oct 3, 2026 · Updated Oct 21, 2026 (Q1 mart built) · @Danny
 
 ## Purpose
 
@@ -25,7 +25,7 @@ v1 answers three questions from one dataset. The headline is: **where do Marketp
 
 **Priority if time runs short:** Q2 is the must-have, Q1 supports it, and Q4 is the first cut if M5 slips.
 
-**Q1 method:** apply KFF's 1,000-claim minimum, then report the spread as a distribution, never as named highest and lowest issuers. Percentiles within a state don't work: 157 issuer × state groups pass the minimum across 30 states, with a median of 5 issuers per state, 13 states with 3 or fewer, and 1 state with a single issuer. The metric is each state's gap between its highest and lowest issuer rate (states with 2+ issuers), summarized as the median gap across states. M1 preview: 12.4 percentage points, ranging from 1.1 to 24.0 across 29 states. Confirm in M5.
+**Q1 method:** apply KFF's 1,000-claim minimum, then report the spread as a distribution, never as named highest and lowest issuers. Percentiles within a state don't work: 157 issuer × state groups pass the minimum across 30 states, with a median of 5 issuers per state, 13 states with 3 or fewer, and 1 state with a single issuer. The metric is each state's gap between its highest and lowest issuer rate (states with 2+ issuers), summarized as the median gap across states. Confirmed in dbt Oct 21 (`fct_issuer_denial_rates` + `analyses/q1_state_spread.sql`): 156 issuers in 29 states; median gap 12.4 percentage points, ranging from 1.1 to 24.0. Excluded: 2 issuers under 1,000 claims, and Wyoming (one qualifying issuer). Writing up Q1 remains for M5.
 
 **Q4 framing:** resubmissions are a provider action; appeals are filed by enrollees (the CMS dictionary defines them as requests by the insured). The resubmission-to-denial ratio is the provider-side number: 32.1M resubmitted in-network claims against 84.5M denied, 38.0% at the issuer level. It is a ratio, not a rework rate, because one claim can be resubmitted more than once. Appeals are rare by comparison: 262,982 internal appeals against 99.6M denied claims (in- and out-of-network), 0.26%.
 
@@ -193,7 +193,7 @@ v1 has six models across three layers, built only as far as Q1, Q2, and Q4 need.
 | Seed | denial_reason_buckets | Reason | My classification of the 9 reasons into 4 buckets, as a version-controlled CSV |
 | Intermediate | int_plan_denials__by_reason | Plan × reason | Reported plans only; unpivot the 9 in-network reason columns into rows (22,869 = 2,541 × 9); suppressed cells kept as rows flagged `is_suppressed`; bucket joined from the seed |
 | Mart | fct_plan_denials | Plan × reason | Answers Q2 |
-| Mart | fct_issuer_denial_rates | Issuer × state | Answers Q1 |
+| Mart | fct_issuer_denial_rates | Issuer (158 with a reported total) | Answers Q1. Issuer rate, 1,000-claim flag, qualifying issuers per state, state rate (ratio of sums via window functions), and `is_in_q1_comparison` |
 | Mart | fct_issuer_appeals | Issuer × state | Answers Q4 |
 
 **Grain rules:**
@@ -222,7 +222,7 @@ The headline number lands by Oct 25. M4 through M7 are weekend-sized and finish 
 - ☑ **M1 — Explore** (due Oct 11, 2026). Done Oct 6: profile and reconciliation above.
 - ☑ **M2 — Set up** (due Oct 18, 2026). Done Oct 8: environment, dbt project, source, both staging models, 7 tests passing (`dbt build`: PASS=9).
 - ☑ **M3 — First finding** (due Oct 25, 2026). Done Oct 16: Q2 produced and tested in dbt (34.24% provider-side preventable, 35.77% unexplained, 22.70% not preventable, 7.29% eligibility); headline paragraph above.
-- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing (`dbt build`: PASS=24, WARN=2 known out-of-network issues). Remaining: the three marts (fct_plan_denials, fct_issuer_denial_rates, fct_issuer_appeals) and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
+- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: fct_issuer_denial_rates built (`dbt build`: PASS=30, WARN=2). Remaining: fct_plan_denials, fct_issuer_appeals, and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
 - ☐ **M5 — Analyze** (due Nov 29, 2026). Answer Q1 with the minimum-volume rule and within-state gap, then Q4 (resubmission ratio first, appeals second) if time allows. Deliverable: one headline number per question.
 - ☐ **M6 — Present** (due Dec 6, 2026). One Tableau Public view that makes the headline visible: in-network denial reasons by bucket. Time-boxed to one weekend. Deliverable: published link and a static image for the README.
 - ☐ **M7 — Recommend and write up** (due Dec 13, 2026). A one-page findings memo for a hypothetical clinic billing manager with 3 recommendations in the finding → action → owner → KPI format; the README (finding and memo first, trust panel, limitations box, chart, dashboard link, reproduce steps); and the case study with the CARC appendix. Generate the dbt docs and link them, without polishing them. Deliverable: a reader can repeat the headline finding after a 60-second skim.
@@ -280,6 +280,8 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - Oct 8: Suppressed reason cells stay in the intermediate model as flagged rows.
 - Oct 16: The headline leads with 34% of all reasons; "more than half of reasons with a known cause" is the supporting line.
 - Oct 16: Out-of-network denied > received is a warning, not a failure.
+- Oct 21: Q1 compares issuers with 1,000+ in-network claims in states with 2+ such issuers.
+- Oct 21: The Q1 mart stores each issuer's own rate alongside its counts; rollups always re-sum the counts.
 
 ## Sources
 
