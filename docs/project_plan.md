@@ -1,6 +1,6 @@
 # Claims Denial Analysis — Project Plan
 
-Created Oct 3, 2026 · Updated Oct 21, 2026 (Q1 and Q4 marts built) · @Danny
+Created Oct 3, 2026 · Updated Oct 21, 2026 (all marts built; Q4 method corrected) · @Danny
 
 ## Purpose
 
@@ -116,9 +116,9 @@ KFF publishes rounded figures, so the tolerance is half of KFF's rounding unit: 
 
 The 1,000-claim minimum changes nothing material: it removes 2 issuer × state groups with 302 claims received between them. The PY2026 file already excludes Illinois and Georgia.
 
-**Q4 reconciliation (Oct 21):** internal appeals filed match KFF exactly (262,982; tested). The upheld *share* matches: among the 135 issuers reporting both appeals filed and overturned, 66.4% of internal appeals were upheld vs. KFF's 66%. The upheld *count* does not: 169,566 vs. KFF's 165,863, a 3,703 gap KFF's methodology doesn't explain. Report the percentage, not the count.
+**Q4 reconciliation (Oct 21):** internal appeals filed match KFF exactly (262,982; tested). Overturned appeals do not reconcile: with suppressed overturned counts bounded at 1 to 10, 32.6% of internal appeals were overturned (67.4% upheld) vs. KFF's 66% upheld and 165,863 upheld appeals. KFF's published method (suppressed values as zero) gives 67.4% on this file, not 66%, so the gap likely comes from which insurers KFF included for that figure; it can't be confirmed from the published method. Report 32.6% overturned, cite KFF's figure, and note the difference.
 
-**Q4 numbers (built in dbt Oct 21, `analyses/q4_after_denial.sql`):** 38.0 in-network resubmissions per 100 in-network denials (157 issuers); 0.26 internal appeals per 100 denials (147 issuers); 33.6% of internal appeals overturned (135 issuers). Each ratio uses only issuers that report both of its numbers.
+**Q4 numbers (built in dbt Oct 21, `analyses/q4_after_denial.sql`):** 38.0 in-network resubmissions per 100 in-network denials; 0.26 internal appeals per 100 denials (in- and out-of-network); 32.6% of internal appeals overturned (bounds 32.63–32.67%). Suppressed numerators are computed at 1 and at 10, and the true value lies between.
 
 **M1 checks**
 
@@ -194,9 +194,9 @@ v1 has six models across three layers, built only as far as Q1, Q2, and Q4 need.
 | Staging | stg_tcpuf__plan_denials | Plan | Ind QHP only; all 4,159 plans kept; `try_cast` plan-level counts so `**` and `N/A` become null; `denial_total_status` records reported / suppressed / new_plan. Downstream models filter to `reported` (2,541 plans) |
 | Seed | denial_reason_buckets | Reason | My classification of the 9 reasons into 4 buckets, as a version-controlled CSV |
 | Intermediate | int_plan_denials__by_reason | Plan × reason | Reported plans only; unpivot the 9 in-network reason columns into rows (22,869 = 2,541 × 9); suppressed cells kept as rows flagged `is_suppressed`; bucket joined from the seed |
-| Mart | fct_plan_denials | Plan × reason | Answers Q2 |
+| Mart | fct_plan_denials | Plan × reason (22,869) | Answers Q2 and feeds Tableau. Adds plan type, metal level, issuer name, and bucket labels and sort order. Contains no claim totals, so the 9x fan-out can't happen from this table |
 | Mart | fct_issuer_denial_rates | Issuer (158 with a reported total) | Answers Q1. Issuer rate, 1,000-claim flag, qualifying issuers per state, state rate (ratio of sums via window functions), and `is_in_q1_comparison` |
-| Mart | fct_issuer_appeals | Issuer (158 with a reported total) | Answers Q4. Counts only, plus `has_*` flags marking which ratios each issuer can join |
+| Mart | fct_issuer_appeals | Issuer (158 with a reported total) | Answers Q4. Counts only; ratios computed in the analysis with suppressed values bounded |
 
 **Grain rules:**
 
@@ -224,7 +224,7 @@ The headline number lands by Oct 25. M4 through M7 are weekend-sized and finish 
 - ☑ **M1 — Explore** (due Oct 11, 2026). Done Oct 6: profile and reconciliation above.
 - ☑ **M2 — Set up** (due Oct 18, 2026). Done Oct 8: environment, dbt project, source, both staging models, 7 tests passing (`dbt build`: PASS=9).
 - ☑ **M3 — First finding** (due Oct 25, 2026). Done Oct 16: Q2 produced and tested in dbt (34.24% provider-side preventable, 35.77% unexplained, 22.70% not preventable, 7.29% eligibility); headline paragraph above.
-- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: fct_issuer_denial_rates and fct_issuer_appeals built (`dbt build`: PASS=35, WARN=2). Remaining: fct_plan_denials and the ingest script. Deliverable: dbt build runs clean from a fresh clone.
+- ☐ **M4 — Finish the model** (due Nov 15, 2026). Oct 16: all 6 core tests passing. Oct 21: all three marts built (`dbt build`: PASS=40, WARN=2). Remaining: the ingest script. Deliverable: dbt build runs clean from a fresh clone.
 - ☐ **M5 — Analyze** (due Nov 29, 2026). Answer Q1 with the minimum-volume rule and within-state gap, then Q4 (resubmission ratio first, appeals second) if time allows. Deliverable: one headline number per question.
 - ☐ **M6 — Present** (due Dec 6, 2026). One Tableau Public view that makes the headline visible: in-network denial reasons by bucket. Time-boxed to one weekend. Deliverable: published link and a static image for the README.
 - ☐ **M7 — Recommend and write up** (due Dec 13, 2026). A one-page findings memo for a hypothetical clinic billing manager with 3 recommendations in the finding → action → owner → KPI format; the README (finding and memo first, trust panel, limitations box, chart, dashboard link, reproduce steps); and the case study with the CARC appendix. Generate the dbt docs and link them, without polishing them. Deliverable: a reader can repeat the headline finding after a 60-second skim.
@@ -284,7 +284,8 @@ Scope is fixed at one dataset, one plan year, and three questions.
 - Oct 16: Out-of-network denied > received is a warning, not a failure.
 - Oct 21: Q1 compares issuers with 1,000+ in-network claims in states with 2+ such issuers.
 - Oct 21: The Q1 mart stores each issuer's own rate alongside its counts; rollups always re-sum the counts.
-- Oct 21: Q4 ratios use matched sets: an issuer counts only if both the numerator and denominator are reported.
+- Oct 21: Q4 ratios bound suppressed values at 1 and 10 (replaces the earlier matched-set rule the same day).
+- Oct 21: fct_plan_denials carries no claim totals, so fan-out can't happen from it.
 - Oct 21: The appeal rate divides by all denials (in- and out-of-network), since appeals aren't split by network.
 
 ## Sources

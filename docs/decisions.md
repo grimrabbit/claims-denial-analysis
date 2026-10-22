@@ -97,7 +97,7 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Why:** An issuer's own rate is correct at issuer grain, and Tableau needs it to plot issuers. Keeping the counts in the same table means any state or national figure can be re-summed correctly. The column description warns never to average it.
 - **Alternative:** Store counts only and compute every rate in Tableau. Rejected because it pushes core logic into the dashboard, where it isn't tested.
 
-## 2026-10-21: Q4 ratios use matched sets
+## 2026-10-21: Q4 ratios use matched sets (SUPERSEDED the same day; see "Q4 ratios bound suppressed values" below)
 - **Decision:** Each Q4 ratio includes only issuers that report both its numerator and its denominator: resubmissions (157 issuers), appeal rate (147), overturn rate (135). The mart carries `has_*` flags for each set.
 - **Why:** Suppressed cells hide values from 1 to 10. If an issuer reports 2,600 appeals filed but suppresses its overturned count, treating the missing overturned count as zero adds 2,600 appeals to the denominator and none to the numerator, understating the overturn rate. Matching keeps both sides from the same issuers. The overturn rate is 33.6% matched vs. 32.6% with suppressed values as zero.
 - **Alternative:** Treat suppressed values as zero, as KFF does. Rejected because it biases ratios whenever the numerator is suppressed more often than the denominator, which is the case for overturned appeals (21 issuers suppressed) vs. appeals filed (11).
@@ -107,7 +107,18 @@ One entry per non-obvious choice. Format: date, decision, why, alternative consi
 - **Why:** CMS reports appeals at the issuer level without splitting them by network, so an appeal can be of either kind of denial. KFF divides by in-network denials only; both versions are under 1%.
 - **Alternative:** In-network denials only, to match KFF's wording. Rejected because it pairs a numerator covering all denials with a denominator covering some.
 
-## 2026-10-21: Report the upheld share, not the upheld count
+## 2026-10-21: Report the upheld share, not the upheld count (SUPERSEDED; see "Q4 ratios bound suppressed values" below)
 - **Decision:** Q4 reports that 66.4% of internal appeals were upheld (33.6% overturned), not a count of upheld appeals.
 - **Why:** The share matches KFF's 66%. The count does not: 169,566 from the matched set vs. KFF's 165,863, a 3,703 gap that KFF's published methodology doesn't explain. Appeals filed match KFF exactly (262,982), and that's tested.
 - **Alternative:** Report KFF's count. Rejected because I can't reproduce it.
+
+## 2026-10-21: Q4 ratios bound suppressed values at 1 and 10
+- **Decision:** Each Q4 ratio includes every issuer whose denominator is reported. Suppressed numerators are computed twice, once at 1 and once at 10, and the true value lies between. Results: 38.0 resubmissions per 100 in-network denials, 0.26 appeals per 100 denials, 32.6% of internal appeals overturned (32.63% to 32.67%).
+- **Why:** This replaces the matched-set rule, which was wrong for this data. Suppression is informative: a hidden overturned count means that issuer overturned 1 to 10 appeals. The 12 issuers with hidden overturned counts filed 7,609 appeals between them, so their overturn rate is at most 1.6%. Dropping them removed low-overturn issuers and raised the rate to 33.6%; bounding them shows the true rate is 32.6% whichever value the hidden cells hold. This is the same approach used for suppressed denial reasons (worst case 0.03%).
+- **Alternative:** Matched sets (33.6%, biased upward) or suppressed values as zero (32.63%, the low bound). Bounding is preferred because it shows the range instead of picking one end.
+- **KFF:** appeals filed match exactly (262,982, tested). Upheld does not: 67.4% here vs. KFF's 66% and 165,863. KFF's stated zero-substitution method gives 67.4% on this file too, so the difference likely comes from which insurers KFF included for that figure. Reported as an unexplained difference.
+
+## 2026-10-21: fct_plan_denials carries no claim totals
+- **Decision:** The plan x reason mart has denial reason counts and labels but no claims-received or denied-claims columns.
+- **Why:** Each plan has 9 rows. Any plan-level total on this table would repeat 9 times, and summing it in Tableau would overstate it 9x. Leaving the columns out makes that mistake impossible from this table; denial rates come from fct_issuer_denial_rates.
+- **Alternative:** Include the totals with a warning in the description. Rejected because a description doesn't stop a drag-and-drop sum.
